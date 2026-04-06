@@ -1,0 +1,11 @@
+PyPDF2
+python-dotenv
+python-docx
+newspaper3k
+lxml_html_clean
+google-genai
+streamlit
+pillow
+python-dotenv
+
+
