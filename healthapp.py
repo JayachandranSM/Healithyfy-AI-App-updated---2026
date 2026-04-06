@@ -1,6 +1,7 @@
 import os
 import time
 import streamlit as st
+from streamlit.runtime.secrets import StreamlitSecretNotFoundError # Add this line
 from PIL import Image
 from dotenv import load_dotenv
 # Use the new SDK
@@ -12,8 +13,22 @@ warnings.filterwarnings("ignore", category=DeprecationWarning)
 load_dotenv()
 
 # Initialize the new Client
-client = genai.Client(api_key=os.getenv("GOOGLE_API_KEY"))
+#client = genai.Client(api_key=os.getenv("GOOGLE_API_KEY"))
 
+# 1. Try to get the key from Streamlit Secrets (Cloud)
+try:
+    api_key = st.secrets["GOOGLE_API_KEY"]
+except (FileNotFoundError, KeyError, StreamlitSecretNotFoundError):
+    # 2. If Secrets fail (Local), fall back to .env
+    api_key = os.getenv("GOOGLE_API_KEY")
+
+# 3. Final check: If still no key, show a friendly error
+if not api_key:
+    st.error("🔑 API Key not found! Please check your .env file locally or Streamlit Secrets in the Cloud.")
+    st.stop()
+
+# Initialize the Client
+client = genai.Client(api_key=api_key)
 def get_gemini_response_with_retry(input_prompt, image_file, retries=3):
     # Use the current stable model: gemini-2.5-flash
     model_id = "gemini-2.5-flash" 
@@ -34,7 +49,7 @@ def get_gemini_response_with_retry(input_prompt, image_file, retries=3):
             raise e
     return "Error: Quota exhausted."
 
-st.set_page_config(page_title="Healthify AI app updated 2026")
+st.set_page_config(page_title="🥗 Healthify AI app updated 2026", layout="centered")
 st.header("Healthify App")
 
 uploaded_file = st.file_uploader("Upload an Image", type=["jpg", "png", "jpeg"])
